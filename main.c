@@ -222,5 +222,6 @@ int main() {
 int main()
 {
     printf("Vamos criar o jogo!");
+    print("SIm");
     return 0;
 }
