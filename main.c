@@ -1,9 +1,9 @@
+#include <stdio.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
-#include <stdio.h>
 #include <stdbool.h>
 
 #define SCREEN_W 800
@@ -14,7 +14,7 @@
 #define BULLET_H 10
 #define ALIEN_W 40
 #define ALIEN_H 30
-#define NUM_ALIENS 5
+#define NUM_ALIENS, 5
 #define NUM_BULLETS 10
 
 typedef struct {
@@ -29,8 +29,8 @@ typedef struct {
     bool active;
 } Alien;
 
-void init_aliens(Alien aliens[], int num_aliens) {
-    for (int i = 0; i < num_aliens; i++) {
+void init_aliens(Alien aliens[], int NUM_ALIENS) {
+    for (int i = 0; i < NUM_ALIENS; i++) {
         aliens[i].x = 100 + i * 100;
         aliens[i].y = 50;
         aliens[i].active = true;
@@ -85,20 +85,20 @@ bool check_collision(float x1, float y1, float w1, float h1, float x2, float y2,
     return (x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2);
 }
 
-// FunÃ§Ã£o para verificar se o jogador venceu
+// Função para verificar se o jogador venceu
 bool check_victory(Alien aliens[], int num_aliens) {
     for (int i = 0; i < num_aliens; i++) {
         if (aliens[i].active) {
-            return false; // Ainda hÃ¡ alienÃ­genas ativos
+            return false; // Ainda há alienígenas ativos
         }
     }
-    return true; // Todos os alienÃ­genas foram destruÃ­dos
+    return true; // Todos os alienígenas foram destruídos
 }
 
-// FunÃ§Ã£o para exibir mensagem de vitÃ³ria
+// Função para exibir mensagem de vitória
 void display_victory_message(ALLEGRO_FONT *font) {
     al_clear_to_color(al_map_rgb(0, 0, 0));
-    al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2 - 20, ALLEGRO_ALIGN_CENTRE, "ParabÃ©ns! VocÃª venceu!");
+    al_draw_text(font, al_map_rgb(255, 255, 255), SCREEN_W / 2, SCREEN_H / 2 - 20, ALLEGRO_ALIGN_CENTRE, "Parabéns! Você venceu!");
     al_flip_display();
     al_rest(3.0); // Mostra a mensagem por 3 segundos
 }
@@ -204,7 +204,7 @@ int main() {
             al_draw_filled_rectangle(player_x, player_y, player_x + PLAYER_W, player_y + PLAYER_H, al_map_rgb(0, 255, 0));
             draw_bullets(bullets, NUM_BULLETS);
             draw_aliens(aliens, NUM_ALIENS);
-            al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "PontuaÃ§Ã£o: %d", score);
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "Pontuação: %d", score);
             al_flip_display();
         }
     }
