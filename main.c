@@ -14,8 +14,11 @@
 #define BULLET_H 10
 #define ALIEN_W 40
 #define ALIEN_H 30
-#define NUM_ALIENS, 5
+
 #define NUM_BULLETS 10
+
+
+
 
 typedef struct {
     float x, y;
@@ -30,7 +33,8 @@ typedef struct {
 } Alien;
 
 void init_aliens(Alien aliens[], int NUM_ALIENS) {
-    for (int i = 0; i < NUM_ALIENS; i++) {
+    int i = 0;
+    for (i; i < NUM_ALIENS; i++) {
         aliens[i].x = 100 + i * 100;
         aliens[i].y = 50;
         aliens[i].active = true;
@@ -38,14 +42,16 @@ void init_aliens(Alien aliens[], int NUM_ALIENS) {
 }
 
 void draw_aliens(Alien aliens[], int num_aliens) {
-    for (int i = 0; i < num_aliens; i++) {
+    int i = 0;
+    for (i; i < num_aliens; i++) {
         if (aliens[i].active)
             al_draw_filled_rectangle(aliens[i].x, aliens[i].y, aliens[i].x + ALIEN_W, aliens[i].y + ALIEN_H, al_map_rgb(255, 0, 0));
     }
 }
 
 void move_aliens(Alien aliens[], int num_aliens, float speed) {
-    for (int i = 0; i < num_aliens; i++) {
+    int i = 0;
+    for (i; i < num_aliens; i++) {
         aliens[i].y += speed;
         if (aliens[i].y > SCREEN_H) {
             aliens[i].y = 50;
@@ -54,7 +60,8 @@ void move_aliens(Alien aliens[], int num_aliens, float speed) {
 }
 
 void shoot_bullet(Bullet bullets[], int size, float x, float y) {
-    for (int i = 0; i < size; i++) {
+    int i = 0;
+    for (i; i < size; i++) {
         if (!bullets[i].active) {
             bullets[i].x = x;
             bullets[i].y = y;
@@ -65,7 +72,8 @@ void shoot_bullet(Bullet bullets[], int size, float x, float y) {
 }
 
 void update_bullets(Bullet bullets[], int size) {
-    for (int i = 0; i < size; i++) {
+    int i = 0;
+    for (i; i < size; i++) {
         if (bullets[i].active) {
             bullets[i].y -= 5;
             if (bullets[i].y < 0)
@@ -75,7 +83,8 @@ void update_bullets(Bullet bullets[], int size) {
 }
 
 void draw_bullets(Bullet bullets[], int size) {
-    for (int i = 0; i < size; i++) {
+    int i = 0;
+    for (i; i < size; i++) {
         if (bullets[i].active)
             al_draw_filled_rectangle(bullets[i].x, bullets[i].y, bullets[i].x + BULLET_W, bullets[i].y + BULLET_H, al_map_rgb(255, 255, 255));
     }
@@ -87,7 +96,8 @@ bool check_collision(float x1, float y1, float w1, float h1, float x2, float y2,
 
 // Função para verificar se o jogador venceu
 bool check_victory(Alien aliens[], int num_aliens) {
-    for (int i = 0; i < num_aliens; i++) {
+    int i = 0;
+    for (i; i < num_aliens; i++) {
         if (aliens[i].active) {
             return false; // Ainda há alienígenas ativos
         }
@@ -119,10 +129,7 @@ int main() {
         return -1;
     }
 
-    if (!al_init_font_addon() || !al_init_ttf_addon()) {
-        fprintf(stderr, "Falha ao inicializar os addons de fontes.\n");
-        return -1;
-    }
+
 
     ALLEGRO_DISPLAY *display = al_create_display(SCREEN_W, SCREEN_H);
     if (!display) {
@@ -151,8 +158,8 @@ int main() {
     int score = 0;
 
     Bullet bullets[NUM_BULLETS] = {0};
-    Alien aliens[NUM_ALIENS];
-    init_aliens(aliens, NUM_ALIENS);
+
+
 
     al_start_timer(timer);
 
@@ -160,51 +167,51 @@ int main() {
         ALLEGRO_EVENT event;
         al_wait_for_event(event_queue, &event);
 
-        if (event.type == ALLEGRO_EVENT_TIMER) {
+         /*fechar jogo ao apertar esc*/
+         if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE){
+            running = false;
+         }
+
+         /*não sei oq é*/
+         if (event.type == ALLEGRO_EVENT_TIMER) {
             redraw = true;
 
             update_bullets(bullets, NUM_BULLETS);
-            move_aliens(aliens, NUM_ALIENS, 0.5);
 
-            for (int i = 0; i < NUM_BULLETS; i++) {
+            int i = 0;
+            for (i; i < NUM_BULLETS; i++) {
                 if (bullets[i].active) {
-                    for (int j = 0; j < NUM_ALIENS; j++) {
-                        if (aliens[j].active && check_collision(bullets[i].x, bullets[i].y, BULLET_W, BULLET_H, aliens[j].x, aliens[j].y, ALIEN_W, ALIEN_H)) {
-                            bullets[i].active = false;
-                            aliens[j].active = false;
-                            score += 10;
-                        }
+
                     }
                 }
             }
 
-            if (check_victory(aliens, NUM_ALIENS)) {
-                display_victory_message(font);
-                running = false;
-            }
-
-        } else if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-            running = false;
-        } else if (event.type == ALLEGRO_EVENT_KEY_DOWN) {
-            if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE)
-                running = false;
-            if (event.keyboard.keycode == ALLEGRO_KEY_SPACE)
-                shoot_bullet(bullets, NUM_BULLETS, player_x + PLAYER_W / 2.0 - BULLET_W / 2.0, player_y);
-        } else if (event.type == ALLEGRO_EVENT_KEY_CHAR) {
-            if (event.keyboard.keycode == ALLEGRO_KEY_LEFT && player_x > 0)
-                player_x -= 5;
-            if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT && player_x < SCREEN_W - PLAYER_W)
-                player_x += 5;
+        /* movimentando player */
+        if (event.keyboard.keycode == ALLEGRO_KEY_LEFT){
+            player_x -= 10;
+        }
+        if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT){
+            player_x += 10;
         }
 
+        /* tentativa de atirar ainda não funcionando(APERTAR TECLA UP)*/
+        int bullet_y = player_y;
+        if (event.keyboard.keycode == ALLEGRO_KEY_UP){
+
+            for (bullet_y; bullet_y > SCREEN_H; bullet_y = bullet_y + 10){
+            al_draw_filled_circle(player_x, bullet_y, 10, al_map_rgb(0, 255, 0));
+            }
+        }
+
+        /*não sei*/
         if (redraw && al_is_event_queue_empty(event_queue)) {
             redraw = false;
 
             al_clear_to_color(al_map_rgb(0, 0, 0));
             al_draw_filled_rectangle(player_x, player_y, player_x + PLAYER_W, player_y + PLAYER_H, al_map_rgb(0, 255, 0));
             draw_bullets(bullets, NUM_BULLETS);
-            draw_aliens(aliens, NUM_ALIENS);
-            al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "Pontuação: %d", score);
+
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "Pontos: %d", score);
             al_flip_display();
         }
     }
