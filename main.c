@@ -1,10 +1,9 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_font.h>
-#include <allegro5/allegro_ttf.h>
-#include <stdbool.h>
 
 #define SCREEN_W 800
 #define SCREEN_H 600
@@ -16,32 +15,39 @@
 #define ALIEN_H 30
 
 int main() {
-    if (!al_init()) {
+    //Iniciailizadores do Ambiente.
+    if (!al_init()) { //Inicia o Allegro.
         fprintf(stderr, "Falha ao inicializar Allegro.\n");
         return -1;
     }
 
-    if (!al_install_keyboard()) {
+    if (!al_install_keyboard()) { //Inicia o teclado para receber entrada.
         fprintf(stderr, "Falha ao inicializar o teclado.\n");
         return -1;
     }
 
-    if (!al_init_primitives_addon()) {
+    if (!al_init_primitives_addon()) { //Inicia as primitivas.
         fprintf(stderr, "Falha ao inicializar o addon de primitivas.\n");
         return -1;
     }
 
+    if(!al_init_image_addon()) { //Inicia as imagens.
+        fprintf(stderr, "Falha ao inicializar o addon da imagem.\n");
+        return -1;
+    }
 
-
-    ALLEGRO_DISPLAY *display = al_create_display(SCREEN_W, SCREEN_H);
+    int title = "Space Invaders";
+    al_set_new_display_flags(ALLEGRO_WINDOWED); //Bandeira para sinalizar que a exibição será no modo janela.
+    ALLEGRO_DISPLAY * display = al_create_display(SCREEN_W, SCREEN_H); //Cria a janela do programa.
+    al_set_window_title(display, title); //Adiciona o título da janela.
     if (!display) {
         fprintf(stderr, "Falha ao criar display.\n");
         return -1;
     }
 
-    ALLEGRO_FONT *font = al_create_builtin_font();
-    ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
-    ALLEGRO_TIMER *timer = al_create_timer(1.0 / 60);
+    ALLEGRO_FONT * font = al_create_builtin_font(); //Adiciona textos através de uma fonte imbutida.
+    ALLEGRO_TIMER * timer = al_create_timer(1.0 / 60); //FPS e crucial para o funcionamento dos eventos.
+    ALLEGRO_EVENT_QUEUE * event_queue = al_create_event_queue(); //Cria a lista de eventos.
 
     if (!event_queue || !timer || !font) {
         fprintf(stderr, "Falha ao criar recursos principais.\n");
@@ -49,7 +55,7 @@ int main() {
         return -1;
     }
 
-    al_register_event_source(event_queue, al_get_display_event_source(display));
+    al_register_event_source(event_queue, al_get_display_event_source(display)); //Recolhe a fonte do evento e adiciona a lista de eventos.
     al_register_event_source(event_queue, al_get_timer_event_source(timer));
     al_register_event_source(event_queue, al_get_keyboard_event_source());
 
@@ -72,9 +78,9 @@ int main() {
         /* inputs */
 
          /*fechar jogo ao apertar esc*/
-         if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE){
+        if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE){
             running = false;
-         }
+        }
 
         /* movimentando player (letf - right*/
         if (event.keyboard.keycode == ALLEGRO_KEY_LEFT){
@@ -119,9 +125,9 @@ int main() {
             al_flip_display();
 
     }
-
+    //Fechadores do Ambiente.
     al_destroy_font(font);
-    al_destroy_display(display);
+    al_destroy_display(display); //Destrói a janela de exibição.
     al_destroy_timer(timer);
     al_destroy_event_queue(event_queue);
 
