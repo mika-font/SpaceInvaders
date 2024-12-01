@@ -231,7 +231,7 @@
 
 1732833630 c:\allegro\allegromingw\include\allegro5\allegro_image.h
 
-1733015866 source:c:\users\kauef\documents\github\spaceinvaders\main.c
+1733017017 source:c:\users\kauef\documents\github\spaceinvaders\main.c
 	<stdio.h>
 	<stdbool.h>
 	<allegro5/allegro.h>

@@ -60,16 +60,21 @@ int main() {
 
 
     //definindo fun��es primarias
-    bool running = true;
+    int bullet_speed = 10; // velocidade da bala (std = 10)
+    int score = 0; //score
+    int player_speed = 10; //velocidade do player (std = 10)
+
+    //debugs
+    bool enemy_alive = true; // Inimigo deve ser desenhado?
+    bool running = true; // jogo deve rodar?
     bool redraw = true;
     float enemy_x = SCREEN_W /2.0 - ENEMY_W / 2.0;
     float enemy_y = 10;
     float player_x = SCREEN_W / 2.0 - PLAYER_W / 2.0;
     float player_y = SCREEN_H - PLAYER_H - 10;
-    int score = 0;
-    bool enemy_alive = true; // Inimigo deve ser desenhado?
-
-
+    int bullet_y;
+    int bullet_x;
+    bool bullet_active; // bala deveria ser desenhada?
 
     al_start_timer(timer);
 
@@ -80,59 +85,59 @@ int main() {
         /* inputs */
 
          /*fechar jogo ao apertar esc*/
-        if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE){
-            running = false;
+        if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE){ //se apertar esc
+            running = false; // jogo para de rodar
         }
 
-        /* movimentando player (letf - right*/
-        if (event.keyboard.keycode == ALLEGRO_KEY_LEFT){
-            player_x -= 10;
+        /* movimentando player (letf - right)*/
+        if(!(player_x < 0)){ // limites para esquerda
+        if (event.keyboard.keycode == ALLEGRO_KEY_LEFT){ //se apertar seta esquerda
+            player_x -= player_speed; //mover player para esquerda
         }
-        if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT){
-            player_x += 10;
+        }
+        if((!(player_x > SCREEN_W - PLAYER_W))){ // limites para direita
+        if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT){ // se apertar seta direita
+            player_x += player_speed; // mover player para direita
+        }
         }
 
         /* Tiro player(APERTAR TECLA UP)*/
-        bool bullet_active; // bala deveria ser desenhada?
-        int bullet_y;
-        int bullet_x;
-        int bullet_speed = 10; // velocidade da bala
-        if (event.keyboard.keycode == ALLEGRO_KEY_UP){
+        if (event.keyboard.keycode == ALLEGRO_KEY_UP){ // se apertar para cima
             bullet_y = player_y;
             bullet_x = player_x + 25;
-            bullet_active = true;
+            bullet_active = true; //ativa a bala
             }
 
               /*desenhar coisas*/
 //         desenhando background
-            al_clear_to_color(al_map_rgb(0, 0, 0));
+            al_clear_to_color(al_map_rgb(0, 0, 0)); //background preto
 
-            //          desenhando bala
-        if(bullet_active == true){
-            al_draw_filled_circle(bullet_x, bullet_y, BULLET_W, al_map_rgb(255,255,255));
-            bullet_y -= bullet_speed;
-            if (bullet_y <10){
-                bullet_active = false;
-                bullet_y = player_y;
+//          desenhando bala
+        if(bullet_active == true){ // se a bala estiver ativa
+            al_draw_filled_circle(bullet_x, bullet_y, BULLET_W, al_map_rgb(255,255,255)); //desenhe ela na posição de bala
+            bullet_y -= bullet_speed; // mude a posição y dela conforme a velocidade
+            if (bullet_y <10){ //se a bala chegar no top da tela
+                bullet_active = false; //desative ela
+                bullet_y = player_y; //e reinicie a altura da bala
             }
         }
 
 //          desenhando player
-            al_draw_filled_rectangle(player_x, player_y, player_x + PLAYER_W, player_y + PLAYER_H, al_map_rgb(0, 255, 0));
+            al_draw_filled_rectangle(player_x, player_y, player_x + PLAYER_W, player_y + PLAYER_H, al_map_rgb(0, 255, 0)); //desenhe o player na posição correta
 
 
-                        /*matar nave inimiga*/
+//          matar nave inimiga
 
-            if(((bullet_x < (enemy_x + ENEMY_W)) && (bullet_x > enemy_x)) && bullet_y <= enemy_y ){
+            if((((bullet_x < (enemy_x + ENEMY_W)) && (bullet_x > enemy_x)) && bullet_y <= enemy_y) && bullet_active == true){ // se a bala entrar no perimetro do inimigo e estiver ativa
                // al_draw_filled_rectangle(0,0,10,10,al_map_rgb(255,255,255));
-                enemy_alive = false;
+                enemy_alive = false; //mata o inimigo
 
             }
 
 //          desenhando inimigo
-        if(enemy_alive == true){
+        if(enemy_alive == true){ //se o inimigo estiver vivo
 
-            al_draw_filled_rectangle(enemy_x, enemy_y, enemy_x + ENEMY_W, enemy_y + ENEMY_H, al_map_rgb(0,0,255));
+            al_draw_filled_rectangle(enemy_x, enemy_y, enemy_x + ENEMY_W, enemy_y + ENEMY_H, al_map_rgb(0,0,255)); //desenha o inimigo
         }
 
 
