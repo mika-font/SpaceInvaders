@@ -9,10 +9,9 @@
 #define SCREEN_H 600
 #define PLAYER_W 50
 #define PLAYER_H 30
-#define BULLET_W 5
-#define BULLET_H 10
-#define ALIEN_W 40
-#define ALIEN_H 30
+#define BULLET_W 10
+#define ENEMY_W 40
+#define ENEMY_H 30
 
 int main() {
     //Iniciailizadores do Ambiente.
@@ -63,9 +62,12 @@ int main() {
     //definindo fun��es primarias
     bool running = true;
     bool redraw = true;
+    float enemy_x = SCREEN_W /2.0 - ENEMY_W / 2.0;
+    float enemy_y = 10;
     float player_x = SCREEN_W / 2.0 - PLAYER_W / 2.0;
     float player_y = SCREEN_H - PLAYER_H - 10;
     int score = 0;
+    bool enemy_alive = true; // Inimigo deve ser desenhado?
 
 
 
@@ -101,23 +103,40 @@ int main() {
             bullet_active = true;
             }
 
-
               /*desenhar coisas*/
 //         desenhando background
             al_clear_to_color(al_map_rgb(0, 0, 0));
 
-//          desenhando player
-            al_draw_filled_rectangle(player_x, player_y, player_x + PLAYER_W, player_y + PLAYER_H, al_map_rgb(0, 255, 0));
-
-//          desenhando bala
+            //          desenhando bala
         if(bullet_active == true){
-            al_draw_filled_circle(bullet_x, bullet_y, BULLET_H, al_map_rgb(255,255,255));
+            al_draw_filled_circle(bullet_x, bullet_y, BULLET_W, al_map_rgb(255,255,255));
             bullet_y -= bullet_speed;
             if (bullet_y <10){
                 bullet_active = false;
                 bullet_y = player_y;
             }
         }
+
+//          desenhando player
+            al_draw_filled_rectangle(player_x, player_y, player_x + PLAYER_W, player_y + PLAYER_H, al_map_rgb(0, 255, 0));
+
+
+                        /*matar nave inimiga*/
+
+            if(((bullet_x < (enemy_x + ENEMY_W)) && (bullet_x > enemy_x)) && bullet_y <= enemy_y ){
+               // al_draw_filled_rectangle(0,0,10,10,al_map_rgb(255,255,255));
+                enemy_alive = false;
+
+            }
+
+//          desenhando inimigo
+        if(enemy_alive == true){
+
+            al_draw_filled_rectangle(enemy_x, enemy_y, enemy_x + ENEMY_W, enemy_y + ENEMY_H, al_map_rgb(0,0,255));
+        }
+
+
+
 
 //          pontua��o
             al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "Pontos: %d", score);
