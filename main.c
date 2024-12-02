@@ -100,9 +100,6 @@ int main(int argc, char **argv) {
             break;
         }
 
-        //Adicionando background
-        al_draw_bitmap(background, SCREEN_W, SCREEN_H, 0);
-        al_set_target_bitmap(al_get_backbuffer(display));
 
         /* movimentando player (letf - right)*/
         if(!(player_x < 0)){ // limites para esquerda
@@ -124,7 +121,11 @@ int main(int argc, char **argv) {
         }
 
 
-//          desenhando bala
+        //Adicionando background
+        al_draw_bitmap(background, 0, 0, 0);
+        al_set_target_bitmap(al_get_backbuffer(display));
+
+//         desenhando bala
         if(bullet_active == true){ // se a bala estiver ativa
             al_draw_filled_circle(bullet_x, bullet_y, BULLET_W, al_map_rgb(255,255,255)); //desenhe ela na posição de bala
             bullet_y -= bullet_speed; // mude a posição y dela conforme a velocidade
@@ -135,7 +136,8 @@ int main(int argc, char **argv) {
         }
 
 //          desenhando player
-            al_draw_filled_rectangle(player_x, player_y, player_x + PLAYER_W, player_y + PLAYER_H, al_map_rgb(0, 255, 0)); //desenhe o player na posição correta
+            al_draw_bitmap(nave_jogador, player_x, player_y - 40, 0);
+            //al_draw_filled_rectangle(player_x, player_y, player_x + PLAYER_W, player_y + PLAYER_H, al_map_rgb(0, 255, 0)); //desenhe o player na posição correta
 
 
 //          matar nave inimiga
