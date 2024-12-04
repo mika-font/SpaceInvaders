@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
@@ -21,6 +20,13 @@ struct Bullets{
 };
 
 int main(int argc, char **argv) {
+    //Ponteiros ferramentas
+    ALLEGRO_DISPLAY * display = NULL;
+    ALLEGRO_BITMAP * icon = NULL;
+    ALLEGRO_FONT * font = NULL;
+    ALLEGRO_TIMER * timer = NULL;
+    ALLEGRO_EVENT_QUEUE * event_queue = NULL;
+
     //Iniciailizadores do Ambiente.
     if (!al_init()) { //Inicia o Allegro.
         fprintf(stderr, "Falha ao inicializar Allegro.\n");
@@ -42,20 +48,20 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    al_set_new_display_flags(ALLEGRO_WINDOWED); //Bandeira para sinalizar que a exibição será no modo janela.
-    ALLEGRO_DISPLAY * display = al_create_display(SCREEN_W, SCREEN_H); //Cria a janela do programa.
-    ALLEGRO_BITMAP * icon = al_load_bitmap("assets/Icon/icon_window.png"); //Puxa o icon da pasta Icon.
-    al_set_window_title(display, "Space Invaders"); //Adiciona o título da janela.
-    al_set_display_icon(display, icon); //Adiciona um icon na janela.
+    al_set_new_display_flags(ALLEGRO_WINDOWED);           // Bandeira para sinalizar que a exibição será no modo janela.
+    display = al_create_display(SCREEN_W, SCREEN_H);      // Cria a janela do programa.
+    icon = al_load_bitmap("assets/Icon/icon_window.png"); // Puxa o icon da pasta Icon.
+    al_set_window_title(display, "Space Invaders");       // Adiciona o título da janela.
+    al_set_display_icon(display, icon);                   // Adiciona um icon na janela.
 
     if (!display) {
         fprintf(stderr, "Falha ao criar display.\n");
         return -1;
     }
 
-    ALLEGRO_FONT * font = al_create_builtin_font(); //Adiciona textos através de uma fonte imbutida.
-    ALLEGRO_TIMER * timer = al_create_timer(1.0 / 60); //FPS é crucial para o funcionamento dos eventos.
-    ALLEGRO_EVENT_QUEUE * event_queue = al_create_event_queue(); //Cria a lista de eventos.
+    font = al_create_builtin_font();                       // Adiciona textos através de uma fonte imbutida.
+    timer = al_create_timer(1.0 / 60);                     // FPS é crucial para o funcionamento dos eventos.
+    event_queue = al_create_event_queue();                 // Cria a lista de eventos.
 
     if (!event_queue || !timer || !font) {
         fprintf(stderr, "Falha ao criar recursos principais.\n");
@@ -68,119 +74,121 @@ int main(int argc, char **argv) {
     al_register_event_source(event_queue, al_get_keyboard_event_source());
     al_start_timer(timer);
 
-    //Definindo sprites
-    ALLEGRO_BITMAP * background = al_load_bitmap("assets/Backgrounds/blue.png");
-    ALLEGRO_BITMAP * nave_jogador = al_load_bitmap("assets/PNG/nave_verde.png");
-    ALLEGRO_BITMAP * inimigo_linha1 = al_load_bitmap("assets/PNG/Enemies/inimigo_azul.png");
-    ALLEGRO_BITMAP * inimigo_linha2 = al_load_bitmap("assets/PNG/Enemies/inimigo_azul2.png");
-    ALLEGRO_BITMAP * inimigo_linha3 = al_load_bitmap("assets/PNG/Enemies/inimigo_cinza.png");
-    ALLEGRO_BITMAP * inimigo_linha4 = al_load_bitmap("assets/PNG/Enemies/inimigo_cinza_2.png");
-    ALLEGRO_BITMAP * projetil_jogador = al_load_bitmap("assets/PNG/Lasers/laserBlue01.png");
-    ALLEGRO_BITMAP * projetil_inimigo = al_load_bitmap("assets/PNG/Lasers/laserRlue01.png");
+    // Ponteiros Sprites
+    ALLEGRO_BITMAP * background = NULL;
+    ALLEGRO_BITMAP * nave_jogador = NULL;
+    ALLEGRO_BITMAP * inimigo_linha1 = NULL;
+    ALLEGRO_BITMAP * inimigo_linha2 = NULL;
+    ALLEGRO_BITMAP * inimigo_linha3 = NULL;
+    ALLEGRO_BITMAP * inimigo_linha4 = NULL;
+    ALLEGRO_BITMAP * projetil_jogador = NULL;
+    ALLEGRO_BITMAP * projetil_inimigo = NULL;
+    ALLEGRO_BITMAP * fogo = NULL;
 
-    //Definindo variáveis
-    struct Bullets bullets[INDIC_PROJ];
-    int bullet_speed = 10; // Velocidade da bala (std = 10)
-    int score = 0; //Pontuação
-    int player_speed = 10; // Velocidade do player (std = 10)
-    int bullet_index = 0;
-    int i, j;
-    int cooldown_frames = 60; // 200ms (12 frames a 60 FPS)
-    int cooldown_timer = 0;
+    // Definindo sprites
+    background = al_load_bitmap("assets/Backgrounds/blue.png");
+    nave_jogador = al_load_bitmap("assets/PNG/nave_verde.png");
+    inimigo_linha1 = al_load_bitmap("assets/PNG/Enemies/inimigo_azul.png");
+    inimigo_linha2 = al_load_bitmap("assets/PNG/Enemies/inimigo_azul2.png");
+    inimigo_linha3 = al_load_bitmap("assets/PNG/Enemies/inimigo_cinza.png");
+    inimigo_linha4 = al_load_bitmap("assets/PNG/Enemies/inimigo_cinza_2.png");
+    projetil_jogador = al_load_bitmap("assets/PNG/Lasers/laserBlue01.png");
+    projetil_inimigo = al_load_bitmap("assets/PNG/Lasers/laserRlue01.png");
+    fogo = al_load_bitmap("assets/PNG/chama_azul.png");
 
-    //debugs
-    bool enemy_alive = true; // Inimigo deve ser desenhado?
-    bool running = true; // jogo deve rodar?
-    bool redraw = true;
-    float enemy_x = SCREEN_W /2.0 - ENEMY_W / 2.0;
-    float enemy_y = 10;
-    float player_x = SCREEN_W / 2.0 - PLAYER_W / 2.0;
-    float player_y = SCREEN_H - PLAYER_H - 10;
+    // Definindo variáveis e estruturas
+    struct Bullets bullets[INDIC_PROJ];               // Vetor da estrutura Bullets.
+    int bullet_speed = 10;                            // Velocidade da bala (std = 10)
+    int score = 0;                                    // Pontuação
+    int player_speed = 10;                            // Velocidade do player (std = 10)
+    int bullet_index = 0;                             // Index inicial do vetor bullets
+    int i, j;                                         // Variáveis utilizadas no For do vetor bullets
+    int cooldown = 0;                                 // Variável de permição para atirar
+    int cooldown_frames = 20;                         // Variável de temporização do cooldown
+    float player_x = SCREEN_W / 2.0 - PLAYER_W / 2.0; // Variável de localização do jogador
+    float player_y = SCREEN_H - PLAYER_H - 10;        // Variável de localização do jogador
+    bool running = true;                              // Jogo deve rodar?
+
+    // Definição de tamanho dos sprites
+    int largura_navejogador = al_get_bitmap_width(nave_jogador);
+    int altura_navejogador = al_get_bitmap_height(nave_jogador);
+    float largura_nj = largura_navejogador * 0.75;
+    float altura_nj = altura_navejogador * 0.75;
+
+    int largura_projetil = al_get_bitmap_width(projetil_jogador);
+    int altura_projetil = al_get_bitmap_height(projetil_jogador);
+    float largura_pj = largura_projetil * 0.75;
+    float altura_pj = altura_projetil * 0.75;
+
+    int largura_fogo = al_get_bitmap_width(fogo);
+    int altura_fogo = al_get_bitmap_height(fogo);
+    float largura_fg = largura_fogo * 0.80;
+    float altura_fg = altura_fogo * 0.80;
 
     while (running) {
         ALLEGRO_EVENT event;
         al_wait_for_event(event_queue, &event); //Espera eventos.
 
         //Fechar janela.
-        if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE){ //Utilizando o Esc.
-            running = false;
-        }
-        if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE){ //Utilizando o botão da janela.
+        if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE || event.type == ALLEGRO_EVENT_DISPLAY_CLOSE){ //Utilizando o Esc ou o botão de fechar.
             break;
         }
 
-        //Desenhando plano de fundo e jogador
-        al_draw_bitmap(background, 0, 0, 0);
-        al_set_target_bitmap(al_get_backbuffer(display));
-        al_draw_bitmap(nave_jogador, player_x, player_y - 40, 0);
-
-        // Movimento do player (letf - right)//
-        if(!(player_x < 0)){ // limites para esquerda
-            if (event.keyboard.keycode == ALLEGRO_KEY_LEFT){ //se apertar seta esquerda
-                player_x -= player_speed; //mover player para esquerda
+        // Controles: movimentar p/direita e p/esquerda e atirar.
+        if(!(player_x < 1)){                                    // Limites para esquerda
+            if (event.keyboard.keycode == ALLEGRO_KEY_LEFT){    // Se apertar seta esquerda
+                player_x -= player_speed;                       // Mover player para esquerda
             }
         }
-        if(!(player_x > (SCREEN_W - PLAYER_W))){ // limites para direita
-            if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT){ // se apertar seta direita
-                player_x += player_speed; // mover player para direita
+        if(!(player_x > (SCREEN_W - PLAYER_W))){                // Limites para direita
+            if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT){   // Se apertar seta direita
+                player_x += player_speed;                       // Mover player para direita
             }
         }
-
-        /* Tiro player(APERTAR TECLA SPACE)*/
-        if (event.keyboard.keycode == ALLEGRO_KEY_SPACE){ // se apertar espaco
-            if (bullet_index < INDIC_PROJ) {
-                bullets[bullet_index].x = player_x + 50;
-                bullets[bullet_index].y = player_y - 100;
-                bullets[bullet_index].speed = - bullet_speed; // Velocidade para cima
-                bullets[bullet_index].active = true;
-                bullet_index++;
+        if(event.type == ALLEGRO_EVENT_KEY_DOWN){                                  // Quando pressionado...
+            if (event.keyboard.keycode == ALLEGRO_KEY_SPACE && cooldown == 0){     // Tecla espaço e o cooldown zerado...
+                if (bullet_index < INDIC_PROJ) {                                   // Limitador de vetor
+                    bullets[bullet_index].x = player_x + 40;                       // Ponto de nascimento do projetil
+                    bullets[bullet_index].y = player_y - 90;
+                    bullets[bullet_index].speed = - bullet_speed;                  // Velocidade de movimentação do projétil
+                    bullets[bullet_index].active = true;                           // Define o projétil como ativo
+                    bullet_index++;
+                }
+                cooldown = cooldown_frames;
             }
         }
-
-        if (event.type == ALLEGRO_EVENT_TIMER) {
-            for (i = 0; i < bullet_index; i++) {
-                if (bullets[i].active) {
-                    bullets[i].y += bullets[i].speed;
-                    // Desativa o tiro se sair da tela
-                    if (bullets[i].y < 0) {
-                        bullets[i].active = false;
+        if (event.type == ALLEGRO_EVENT_TIMER){           // A cada frame de tempo
+            for (i = 0; i < bullet_index; i++){
+                if (bullets[i].active) {                  // Se o projétil ainda estiver ativo...
+                    bullets[i].y += bullets[i].speed;     // Movimenta-se.
+                    if (bullets[i].y < 0) {               // Se o projétil passar do final do eixo y...
+                        bullets[i].active = false;        // Torna inativo.
                     }
                 }
             }
         }
 
-        if (al_is_event_queue_empty(event_queue)) {
-            // Desenha os tiros ativos
-            for (j = 0; j < bullet_index; j++) {
+        //Operação das naves inimigas, tiro inimigo, vida do jogador, matar inimigo, matar jogador
+
+        //ATUALIZADOR DE SPRITES E TALS - DEIXE SEMPRE POR ÚLTIMO
+        if (al_is_event_queue_empty(event_queue)){        // Se a lista estiver vazia - serve para atualizar os sprites e outras coisas.
+            al_draw_bitmap(background, 0, 0, 0);
+            al_set_target_bitmap(al_get_backbuffer(display));
+            al_draw_scaled_bitmap(fogo, 0, 0, largura_fogo, altura_fogo, player_x + 35, player_y - 2, largura_fg, altura_fg, 0);
+            al_draw_scaled_bitmap(nave_jogador, 0, 0, largura_navejogador, altura_navejogador, player_x, player_y - 50, largura_nj, altura_nj, 0);
+
+            for (j = 0; j < bullet_index; j++){            // Desenha os tiros ativos
                 if (bullets[j].active) {
-                    al_draw_bitmap(projetil_jogador, bullets[j].x, bullets[j].y, 0);
+                    al_draw_scaled_bitmap(projetil_jogador, 0, 0, largura_projetil, altura_projetil, bullets[j].x, bullets[j].y, largura_pj, altura_pj, 0);
                 }
             }
         }
 
-        /*if(bullet_active == true){ // se a bala estiver ativa
-            al_draw_bitmap(projetil_jogador, bullet_x, bullet_y - 40, 0); //desenhe ela na posição de bala
-            bullet_y -= bullet_speed; // mude a posição y dela conforme a velocidade
-            if (bullet_y <10){ //se a bala chegar no top da tela
-                al_destroy_bitmap(projetil_jogador);
-                bullet_active = false; //desativa
-                bullet_y = player_y; //e reinicie a altura da bala
-            }
-        }*/
-
-//          matar nave inimiga
-
-            //if((((bullet_x < (enemy_x + ENEMY_W)) && (bullet_x > enemy_x)) && bullet_y <= enemy_y) && bullet_active == true){ // se a bala entrar no perimetro do inimigo e estiver ativa
-               // al_draw_filled_rectangle(0,0,10,10,al_map_rgb(255,255,255));
-                //enemy_alive = false; //mata o inimigo
-
-            //}
-
-//          desenhando inimigo
-        if(enemy_alive == true){ //se o inimigo estiver vivo
-            al_draw_filled_rectangle(enemy_x, enemy_y, enemy_x + ENEMY_W, enemy_y + ENEMY_H, al_map_rgb(0,0,255)); //desenha o inimigo
+        if (cooldown > 0) {
+            cooldown--;
         }
-//          pontua��o
+
+            //pontua��o
             al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "Pontos: %d", score);
             al_draw_textf(font, al_map_rgb(255, 255, 255), 700, 10, 0, "ESC TO EXIT");
             al_flip_display();
