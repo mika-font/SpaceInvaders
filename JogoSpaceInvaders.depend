@@ -245,9 +245,8 @@
 1372639132 c:\allegro\allegromingw\include\allegro5\allegro_font.h
 	"allegro5/allegro.h"
 
-1733342071 source:c:\users\mikae\onedrive\documentos\faculdade\prog_c\spaceinvaders\main.c
+1734357373 source:c:\users\mikae\onedrive\documentos\faculdade\prog_c\spaceinvaders\main.c
 	<stdio.h>
-	<stdbool.h>
 	<allegro5/allegro.h>
 	<allegro5/allegro_image.h>
 	<allegro5/allegro_primitives.h>
