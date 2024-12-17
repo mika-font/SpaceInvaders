@@ -185,15 +185,13 @@ if (!al_init_acodec_addon()) {
     float altura_in = altura_inimigo * 0.50;
 
     while (running) {
-
-
         ALLEGRO_EVENT event;
         al_wait_for_event(event_queue, &event); //Espera eventos.
 
         int tocar_musica = 1;
         if (tocar_musica == 1){
-        al_play_sample_instance(songInstance);
-        tocar_musica = 0;
+            al_play_sample_instance(songInstance);
+            tocar_musica = 0;
         }
         //Fechar janela utilizando o Esc ou o botão de fechar.
         if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE || event.type == ALLEGRO_EVENT_DISPLAY_CLOSE){
