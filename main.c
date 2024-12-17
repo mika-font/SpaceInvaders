@@ -54,14 +54,14 @@ int main(int argc, char **argv) {
     }
 
     if (!al_install_audio()) {
-    fprintf(stderr, "Falha ao inicializar o áudio.\n");
-    return -1;
-}
+        fprintf(stderr, "Falha ao inicializar o áudio.\n");
+        return -1;
+    }
 
-if (!al_init_acodec_addon()) {
-    fprintf(stderr, "Falha ao inicializar o addon de codec de áudio.\n");
-    return -1;
-}
+    if (!al_init_acodec_addon()) {
+        fprintf(stderr, "Falha ao inicializar o addon de codec de áudio.\n");
+        return -1;
+    }
 
     al_set_new_display_flags(ALLEGRO_WINDOWED);           // Bandeira para sinalizar que a exibição será no modo janela.
     display = al_create_display(SCREEN_W, SCREEN_H);      // Cria a janela do programa.
@@ -96,6 +96,9 @@ if (!al_init_acodec_addon()) {
 
     // Ponteiros Sprites
     ALLEGRO_BITMAP * background = NULL;
+    ALLEGRO_BITMAP * tela_inicial = NULL;
+    ALLEGRO_BITMAP * tela_game_over = NULL;
+    ALLEGRO_BITMAP * tela_win = NULL;
     ALLEGRO_BITMAP * nave_jogador = NULL;
     ALLEGRO_BITMAP * projetil_jogador = NULL;
     ALLEGRO_BITMAP * projetil_inimigo = NULL;
@@ -104,6 +107,9 @@ if (!al_init_acodec_addon()) {
 
     // Definindo sprites
     background = al_load_bitmap("assets/Backgrounds/fundo_real.jpg");
+    tela_inicial = al_load_bitmap("assets/Backgrounds/inicial.png");
+    tela_win = al_load_bitmap("assets/Backgrounds/win.png");
+    tela_game_over = al_load_bitmap("assets/Backgrounds/gameover.png");
     nave_jogador = al_load_bitmap("assets/PNG/nave_verde.png");
     projetil_jogador = al_load_bitmap("assets/PNG/laserBlue01.png");
     projetil_inimigo = al_load_bitmap("assets/PNG/laserRed01.png");
@@ -124,10 +130,9 @@ if (!al_init_acodec_addon()) {
 
     al_attach_sample_instance_to_mixer(songInstance, al_get_default_mixer());
 
-
     ///////////////////////////////////////////////////////////////////////////////
 
-    if (!background || !nave_jogador || !projetil_jogador || !projetil_inimigo || !fogo || !inimigo_sprite) {
+    if (!background || !tela_game_over || !tela_inicial ||!tela_win || !nave_jogador || !projetil_jogador || !projetil_inimigo || !fogo || !inimigo_sprite) {
         fprintf(stderr, "Falha ao carregar sprites.\n");
         al_destroy_display(display);
         return -1;
@@ -155,14 +160,20 @@ if (!al_init_acodec_addon()) {
     int cooldown_frames = 20;                         // Variável de temporização do cooldown
     float player_x = SCREEN_W / 2.0 - PLAYER_W / 2.0; // Variável de localização do jogador
     float player_y = SCREEN_H - PLAYER_H - 10;        // Variável de localização do jogador
-
+    int vida = 3;
     bool running = true;                              // Jogo deve rodar?
+    int status = 0;
 
     // Definição de tamanho dos sprites
     int largura_background = al_get_bitmap_width(background);
     int altura_background = al_get_bitmap_height(background);
     float largura_back = largura_background * 1.1;
     float altura_back = altura_background * 1.3;
+
+    int largura_tela = al_get_bitmap_width(tela_inicial);
+    int altura_tela = al_get_bitmap_height(tela_inicial);
+    float largura_at_telas = largura_tela * 0.6;
+    float altura_at_telas = altura_tela * 0.64;
 
     int largura_navejogador = al_get_bitmap_width(nave_jogador);
     int altura_navejogador = al_get_bitmap_height(nave_jogador);
@@ -199,134 +210,180 @@ if (!al_init_acodec_addon()) {
             break;
         }
 
-        //Posicionar inimigos
-        if (gerar_enemy == true) {
-            for (linha = 0; linha < 4; linha++) {
-                for (coluna = 0; coluna < 5; coluna++) {
-                    enemy_index = linha * 5 + coluna;     // Calcula o índice no vetor enemies
-                    enemies[enemy_index].x = espacamento_x + (coluna * 120); // Posição X
-                    enemies[enemy_index].y = espacamento_y + (linha * 80);   // Posição Y
-                    enemies[enemy_index].active = true;       // Define o inimigo como ativo
+        switch (status){
+        case 1: // Execução do Jogo
+            //Posicionar inimigos
+            if (gerar_enemy == true) {
+                for (linha = 0; linha < 4; linha++) {
+                    for (coluna = 0; coluna < 5; coluna++) {
+                        enemy_index = linha * 5 + coluna;     // Calcula o índice no vetor enemies
+                        enemies[enemy_index].x = espacamento_x + (coluna * 120); // Posição X
+                        enemies[enemy_index].y = espacamento_y + (linha * 80);   // Posição Y
+                        enemies[enemy_index].active = true;       // Define o inimigo como ativo
+                    }
+                }
+                gerar_enemy = false;
+            }
+
+            // Controles: movimentar p/direita, p/esquerda e atirar.
+            if(!(player_x < 1)){                                    // Limites para esquerda
+                if (event.keyboard.keycode == ALLEGRO_KEY_LEFT){    // Se apertar seta esquerda
+                    player_x -= player_speed;                       // Mover player para esquerda
                 }
             }
-            gerar_enemy = false;
-        }
-
-        // Controles: movimentar p/direita, p/esquerda e atirar.
-        if(!(player_x < 1)){                                    // Limites para esquerda
-            if (event.keyboard.keycode == ALLEGRO_KEY_LEFT){    // Se apertar seta esquerda
-                player_x -= player_speed;                       // Mover player para esquerda
-            }
-        }
-        if(!(player_x > (SCREEN_W - PLAYER_W))){                // Limites para direita
-            if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT){   // Se apertar seta direita
-                player_x += player_speed;                       // Mover player para direita
-            }
-        }
-        if(event.type == ALLEGRO_EVENT_KEY_DOWN){                                  // Quando pressionado...
-            if (event.keyboard.keycode == ALLEGRO_KEY_SPACE && cooldown == 0){      // Tecla espaço e o cooldown zerado...
-                al_play_sample(tiro_som, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);           // som do tiro
-                if (bullet_index < INDIC_PROJ) {                                   // Limitador de vetor
-                    bullets[bullet_index].x = player_x + 40;                       // Ponto de nascimento do projetil
-                    bullets[bullet_index].y = player_y - 90;
-                    bullets[bullet_index].speed = - bullet_speed;                  // Velocidade de movimentação do projétil
-                    bullets[bullet_index].active = true;                           // Define o projétil como ativo
-                    bullet_index++;
+            if(!(player_x > (SCREEN_W - PLAYER_W))){                // Limites para direita
+                if (event.keyboard.keycode == ALLEGRO_KEY_RIGHT){   // Se apertar seta direita
+                    player_x += player_speed;                       // Mover player para direita
                 }
-                cooldown = cooldown_frames;
             }
-        }
-
-        // Geração de tiro aletório dos inimigos
-        if (event.type == ALLEGRO_EVENT_TIMER){
-            for (m = 0; m < ENEMY_COUNT; m++) {
-                if (enemies[m].active) {                        // Se o inimigo estiver ativo
-                    if (rand() % 1200 < 1) {                    // Probabilidade de disparo por frame
-                        if (bullet_index_enemy < INDIC_PROJ) {
-                            enemy_bullets[bullet_index_enemy].x = enemies[m].x + largura_in / 2;
-                            enemy_bullets[bullet_index_enemy].y = enemies[m].y + altura_in;
-                            enemy_bullets[bullet_index_enemy].speed = -bullet_enemy_speed;
-                            enemy_bullets[bullet_index_enemy].active = true;
-                            bullet_index_enemy++;
-                            break;
-                        } //Fim if
-                    } //Fim if
-                } // Fim if
-            } //Fim for
-        } //Fim if
-
-        if (event.type == ALLEGRO_EVENT_TIMER){           // A cada frame de tempo realiza as seguintas verificações:
-            for (m = 0; m < bullet_index_enemy; m++){
-                if (enemy_bullets[m].active) {
-                    enemy_bullets[m].y -= enemy_bullets[m].speed;
-                    if (enemy_bullets[m].y > SCREEN_H){
-                        enemy_bullets[m].active = false;
+            if(event.type == ALLEGRO_EVENT_KEY_DOWN){                                  // Quando pressionado...
+                if (event.keyboard.keycode == ALLEGRO_KEY_SPACE && cooldown == 0){      // Tecla espaço e o cooldown zerado...
+                    al_play_sample(tiro_som, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);           // som do tiro
+                    if (bullet_index < INDIC_PROJ) {                                   // Limitador de vetor
+                        bullets[bullet_index].x = player_x + 40;                       // Ponto de nascimento do projetil
+                        bullets[bullet_index].y = player_y - 90;
+                        bullets[bullet_index].speed = - bullet_speed;                  // Velocidade de movimentação do projétil
+                        bullets[bullet_index].active = true;                           // Define o projétil como ativo
+                        bullet_index++;
                     }
-                } //Fim if
-            } //Fim for
-            for (i = 0; i < bullet_index; i++){
-                if (bullets[i].active) {                  // Se o projétil estiver ativo, irá avançar
-                    bullets[i].y += bullets[i].speed;
-                    if (bullets[i].y < 0) {               // Se o projétil ultrapassar a altura da tela, irá desativar
-                        bullets[i].active = false;
-                    }
-                    for (m = 0; m < ENEMY_COUNT; m++) {
-                        if (enemies[m].active) {          // Se o inimigo e o projétil estiverem ativos, irá desativar ambos
-                            if (bullets[i].x < enemies[m].x + largura_in && bullets[i].x + largura_pj > enemies[m].x &&
-                                bullets[i].y < enemies[m].y + altura_in && bullets[i].y + largura_pj > enemies[m].y) {
-                                bullets[i].active = false;
-                                enemies[m].active = false;
-                                score += 50;
+                    cooldown = cooldown_frames;
+                }
+            }
+
+            // Geração de tiro aletório dos inimigos
+            if (event.type == ALLEGRO_EVENT_TIMER){
+                for (m = 0; m < ENEMY_COUNT; m++) {
+                    if (enemies[m].active) {                        // Se o inimigo estiver ativo
+                        if (rand() % 1200 < 1) {                    // Probabilidade de disparo por frame
+                            if (bullet_index_enemy < INDIC_PROJ) {
+                                enemy_bullets[bullet_index_enemy].x = enemies[m].x + largura_in / 2;
+                                enemy_bullets[bullet_index_enemy].y = enemies[m].y + altura_in;
+                                enemy_bullets[bullet_index_enemy].speed = -bullet_enemy_speed;
+                                enemy_bullets[bullet_index_enemy].active = true;
+                                bullet_index_enemy++;
+                                break;
                             } //Fim if
                         } //Fim if
-                    } //Fim for
-                } //Fim if
-            } //Fim for
-        } //Fim if
+                    } // Fim if
+                } //Fim for
+            } //Fim if
 
-        // A cada frame, movimenta-se os inimigos
-        if (event.type == ALLEGRO_EVENT_TIMER){
-            for (m = 0; m < ENEMY_COUNT; m++) {
-                enemies[m].x += enemy_speed * enemy_direction;
-                enemies[m].y += 0.01;
+            if (event.type == ALLEGRO_EVENT_TIMER){             // A cada frame de tempo realiza as seguintas verificações:
+                for (m = 0; m < bullet_index_enemy; m++){
+                    if (enemy_bullets[m].active) {
+                        enemy_bullets[m].y -= enemy_bullets[m].speed;
+                        if (enemy_bullets[m].y > SCREEN_H){
+                            enemy_bullets[m].active = false;
+                        }
+                        if (enemy_bullets[m].x < player_x + largura_nj && enemy_bullets[m].x + largura_pj > player_x &&
+                            enemy_bullets[m].y < player_y + altura_nj && enemy_bullets[m].y + altura_pj > player_y) {
+                            enemy_bullets[m].active = false;
+                            vida--;
+                        } //Fim if
+                    } //Fim if
+                } //Fim for
+                for (i = 0; i < bullet_index; i++){
+                    if (bullets[i].active) {                  // Se o projétil estiver ativo, irá avançar
+                        bullets[i].y += bullets[i].speed;
+                        if (bullets[i].y < 0) {               // Se o projétil ultrapassar a altura da tela, irá desativar
+                            bullets[i].active = false;
+                        }
+                        for (m = 0; m < ENEMY_COUNT; m++) {
+                            if (enemies[m].active) {          // Se o inimigo e o projétil estiverem ativos, irá desativar ambos
+                                if (bullets[i].x < enemies[m].x + largura_in && bullets[i].x + largura_pj > enemies[m].x &&
+                                    bullets[i].y < enemies[m].y + altura_in && bullets[i].y + largura_pj > enemies[m].y) {
+                                    bullets[i].active = false;
+                                    enemies[m].active = false;
+                                    score += 50;
+                                } //Fim if
+                            } //Fim if
+                        } //Fim for
+                    } //Fim if
+                } //Fim for
+            } //Fim if
+
+            // A cada frame, movimenta-se os inimigos
+            if (event.type == ALLEGRO_EVENT_TIMER){
+                for (m = 0; m < ENEMY_COUNT; m++) {
+                    enemies[m].x += enemy_speed * enemy_direction;
+                    enemies[m].y += 0.01;
+                }
+            } // Fim if
+
+            // Verifica os limites da tela para alterar a direção de movimentação dos inimigos
+            if (enemies[0].x < 0 || enemies[ENEMY_COUNT - 1].x + largura_in > SCREEN_W) {
+                enemy_direction *= -1;
             }
-        } // Fim if
 
-        // Verifica os limites da tela para alterar a direção de movimentação dos inimigos
-        if (enemies[0].x <= 0 || enemies[ENEMY_COUNT - 1].x + largura_in >= SCREEN_W) {
-            enemy_direction *= -1;
-        }
+            if (al_is_event_queue_empty(event_queue)){        // Se a lista estiver vazia, irá atualizar os sprites
+                al_draw_scaled_bitmap(background, 0, 0, largura_background, altura_background,0, 0, largura_back, altura_back, 0);
+                al_set_target_bitmap(al_get_backbuffer(display));
+                al_draw_scaled_bitmap(fogo, 0, 0, largura_fogo, altura_fogo, player_x + 35, player_y - 2, largura_fg, altura_fg, 0);
+                al_draw_scaled_bitmap(nave_jogador, 0, 0, largura_navejogador, altura_navejogador, player_x, player_y - 50, largura_nj, altura_nj, 0);
 
-        if (al_is_event_queue_empty(event_queue)){        // Se a lista estiver vazia, irá atualizar os sprites
-            al_draw_scaled_bitmap(background, 0, 0, largura_background, altura_background,0, 0, largura_back, altura_back, 0);
-            al_set_target_bitmap(al_get_backbuffer(display));
-            al_draw_scaled_bitmap(fogo, 0, 0, largura_fogo, altura_fogo, player_x + 35, player_y - 2, largura_fg, altura_fg, 0);
-            al_draw_scaled_bitmap(nave_jogador, 0, 0, largura_navejogador, altura_navejogador, player_x, player_y - 50, largura_nj, altura_nj, 0);
+                for (j = 0; j < bullet_index; j++){           // Desenha os projéteis ativos do jogador
+                    if (bullets[j].active) {
+                        al_draw_scaled_bitmap(projetil_jogador, 0, 0, largura_projetil, altura_projetil, bullets[j].x, bullets[j].y, largura_pj, altura_pj, 0);
+                    }
+                } // Fim for
+                for (m = 0; m < ENEMY_COUNT; m++) {           // Desenha os inimigos ativos
+                    if (enemies[m].active) {
+                        al_draw_scaled_bitmap(inimigo_sprite, 0, 0, largura_inimigo, altura_inimigo, enemies[m].x, enemies[m].y, largura_in, altura_in, 0);
+                    }
+                } //Fim for
+                for (m = 0; m < bullet_index_enemy; m++){           // Desenha os projéteis ativos dos inimigos
+                    if (enemy_bullets[m].active) {
+                        al_draw_scaled_bitmap(projetil_inimigo, 0, 0, largura_projetil, altura_projetil, enemy_bullets[m].x, enemy_bullets[m].y, largura_pj, altura_pj, 0);
+                    }
+                } // Fim for
+            } //Fim if
 
-            for (j = 0; j < bullet_index; j++){           // Desenha os projéteis ativos do jogador
-                if (bullets[j].active) {
-                    al_draw_scaled_bitmap(projetil_jogador, 0, 0, largura_projetil, altura_projetil, bullets[j].x, bullets[j].y, largura_pj, altura_pj, 0);
+            // Cooldown para atirar
+            if (cooldown > 0) {
+                cooldown--;
+            }
+
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "Pontos: %d   Vida: %d", score, vida); // Imprime os pontos na tela e o aviso
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 700, 10, 0, "ESC TO EXIT");
+
+            if(score == 1000){
+                status = 3;
+            }
+
+            if(vida == 0){
+                status = 2;
+            }
+
+            break;
+        case 2: // Tela de Game Over
+            if (al_is_event_queue_empty(event_queue)){        // Se a lista estiver vazia, irá atualizar os sprites
+                al_draw_scaled_bitmap(tela_game_over, 0, 0, largura_tela, altura_tela, 0, 0, largura_at_telas, altura_at_telas, 0);
+            }
+
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 700, 10, 0, "ESC TO EXIT");
+
+            break;
+        case 3: // Tela de Vitória
+            if (al_is_event_queue_empty(event_queue)){        // Se a lista estiver vazia, irá atualizar os sprites
+                al_draw_scaled_bitmap(tela_win, 0, 0, largura_tela, altura_tela, 0, 0, largura_at_telas, altura_at_telas, 0);
+            }
+
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 700, 10, 0, "ESC TO EXIT");
+            break;
+        default: // Tela Inicial
+            if(event.type == ALLEGRO_EVENT_KEY_DOWN){
+                if(event.keyboard.keycode == ALLEGRO_KEY_ENTER){
+                    status = 1;
                 }
-            } // Fim for
-            for (m = 0; m < ENEMY_COUNT; m++) {           // Desenha os inimigos ativos
-                if (enemies[m].active) {
-                    al_draw_scaled_bitmap(inimigo_sprite, 0, 0, largura_inimigo, altura_inimigo, enemies[m].x, enemies[m].y, largura_in, altura_in, 0);
-                }
-            } //Fim for
-            for (m = 0; m < bullet_index_enemy; m++){           // Desenha os projéteis ativos dos inimigos
-                if (enemy_bullets[m].active) {
-                    al_draw_scaled_bitmap(projetil_inimigo, 0, 0, largura_projetil, altura_projetil, enemy_bullets[m].x, enemy_bullets[m].y, largura_pj, altura_pj, 0);
-                }
-            } // Fim for
-        } //Fim if
+            }
+            if (al_is_event_queue_empty(event_queue)){        // Se a lista estiver vazia, irá atualizar os sprites
+                al_draw_scaled_bitmap(tela_inicial, 0, 0, largura_tela, altura_tela, 0, 0, largura_at_telas, altura_at_telas, 0);
+            }
+            al_draw_textf(font, al_map_rgb(255, 255, 255), SCREEN_W/2.0 - 70, (SCREEN_W/2.0) + 80, 0, "APERTE ENTER PARA COMEÇAR");
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 700, 10, 0, "ESC TO EXIT");
+            break;
+        } //Fim switch
 
-        // Cooldown para atirar
-        if (cooldown > 0) {
-            cooldown--;
-        }
-
-        al_draw_textf(font, al_map_rgb(255, 255, 255), 10, 10, 0, "Pontos: %d", score); // Imprime os pontos na tela e o aviso
-        al_draw_textf(font, al_map_rgb(255, 255, 255), 700, 10, 0, "ESC TO EXIT");
         al_flip_display();
 
 
