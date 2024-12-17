@@ -2,6 +2,8 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_font.h>
+#include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_acodec.h>
 
 #define SCREEN_W 800
 #define SCREEN_H 600
@@ -51,6 +53,16 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    if (!al_install_audio()) {
+    fprintf(stderr, "Falha ao inicializar o áudio.\n");
+    return -1;
+}
+
+if (!al_init_acodec_addon()) {
+    fprintf(stderr, "Falha ao inicializar o addon de codec de áudio.\n");
+    return -1;
+}
+
     al_set_new_display_flags(ALLEGRO_WINDOWED);           // Bandeira para sinalizar que a exibição será no modo janela.
     display = al_create_display(SCREEN_W, SCREEN_H);      // Cria a janela do programa.
     icon = al_load_bitmap("assets/Icon/icon_window.png"); // Puxa o icon da pasta Icon.
@@ -61,6 +73,11 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Falha ao criar display.\n");
         return -1;
     }
+
+    al_install_audio();
+    al_init_acodec_addon();
+
+    /////////////////////////////////////////////////////////
 
     font = al_create_builtin_font();                       // Adiciona textos através de uma fonte imbutida.
     timer = al_create_timer(1.0 / 60);                     // FPS é crucial para o funcionamento dos eventos.
@@ -92,6 +109,23 @@ int main(int argc, char **argv) {
     projetil_inimigo = al_load_bitmap("assets/PNG/laserRed01.png");
     fogo = al_load_bitmap("assets/PNG/chama_azul.png");
     inimigo_sprite = al_load_bitmap("assets/PNG/inimigo_azul.png");
+
+    // Definindo Sons
+    ALLEGRO_SAMPLE * tiro_som = NULL;
+    ALLEGRO_SAMPLE * musica_fundo = NULL;
+    ALLEGRO_SAMPLE_INSTANCE * songInstance = NULL;
+
+    al_reserve_samples(10);
+
+    tiro_som = al_load_sample("assets/Sounds/tiro_som.wav");
+    musica_fundo = al_load_sample("assets/Sounds/musica_fundo.wav");
+    songInstance = al_create_sample_instance(musica_fundo);
+    al_set_sample_instance_playmode(songInstance, ALLEGRO_PLAYMODE_LOOP);
+
+    al_attach_sample_instance_to_mixer(songInstance, al_get_default_mixer());
+
+
+    ///////////////////////////////////////////////////////////////////////////////
 
     if (!background || !nave_jogador || !projetil_jogador || !projetil_inimigo || !fogo || !inimigo_sprite) {
         fprintf(stderr, "Falha ao carregar sprites.\n");
@@ -151,11 +185,19 @@ int main(int argc, char **argv) {
     float altura_in = altura_inimigo * 0.50;
 
     while (running) {
+
+
         ALLEGRO_EVENT event;
         al_wait_for_event(event_queue, &event); //Espera eventos.
 
+        int tocar_musica = 1;
+        if (tocar_musica == 1){
+        al_play_sample_instance(songInstance);
+        tocar_musica = 0;
+        }
         //Fechar janela utilizando o Esc ou o botão de fechar.
         if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE || event.type == ALLEGRO_EVENT_DISPLAY_CLOSE){
+            al_stop_sample_instance(songInstance);
             break;
         }
 
@@ -184,7 +226,8 @@ int main(int argc, char **argv) {
             }
         }
         if(event.type == ALLEGRO_EVENT_KEY_DOWN){                                  // Quando pressionado...
-            if (event.keyboard.keycode == ALLEGRO_KEY_SPACE && cooldown == 0){     // Tecla espaço e o cooldown zerado...
+            if (event.keyboard.keycode == ALLEGRO_KEY_SPACE && cooldown == 0){      // Tecla espaço e o cooldown zerado...
+                al_play_sample(tiro_som, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);           // som do tiro
                 if (bullet_index < INDIC_PROJ) {                                   // Limitador de vetor
                     bullets[bullet_index].x = player_x + 40;                       // Ponto de nascimento do projetil
                     bullets[bullet_index].y = player_y - 90;
@@ -288,6 +331,7 @@ int main(int argc, char **argv) {
         al_draw_textf(font, al_map_rgb(255, 255, 255), 700, 10, 0, "ESC TO EXIT");
         al_flip_display();
 
+
     } //Fim While
 
     //Fechadores do Ambiente.
@@ -301,6 +345,10 @@ int main(int argc, char **argv) {
     al_destroy_display(display);
     al_destroy_timer(timer);
     al_destroy_event_queue(event_queue);
+    al_destroy_sample(tiro_som);
+    al_destroy_sample(musica_fundo);
+    al_destroy_sample_instance(songInstance);
+
 
     return 0;
 }
