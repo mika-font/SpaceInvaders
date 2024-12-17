@@ -116,12 +116,14 @@ int main(int argc, char **argv) {
     ALLEGRO_SAMPLE * tiro_som = NULL;
     ALLEGRO_SAMPLE * musica_fundo = NULL;
     ALLEGRO_SAMPLE_INSTANCE * songInstance = NULL;
+    ALLEGRO_SAMPLE * dano_som = NULL;
 
     al_reserve_samples(10);  // Reserva samples de áudio para sons curtos
 
     // Definindo Som
     tiro_som = al_load_sample("assets/Sounds/tiro_som.wav");
     musica_fundo = al_load_sample("assets/Sounds/musica_fundo.wav");
+    dano_som = al_load_sample("assets/Sounds/dano_som.wav");
     songInstance = al_create_sample_instance(musica_fundo);
     al_set_sample_instance_playmode(songInstance, ALLEGRO_PLAYMODE_LOOP);
 
@@ -301,6 +303,7 @@ int main(int argc, char **argv) {
                             enemy_bullets[m].y < player_y + altura_navejogador && enemy_bullets[m].y + altura_pj > player_y) {
                             enemy_bullets[m].active = false;
                             vida--;
+                            al_play_sample(dano_som, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);
                             invisivel_timer = invisivel_duracao;                // Inicia o pisca de indicação de dano
                         } //Fim if
                     } //Fim if
