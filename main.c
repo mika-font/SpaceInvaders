@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
 
     ///////////////////////////////////////////////////////////////////////////////
 
-    if (!tiro_som || !musica_fundo) {
+    if (!tiro_som || !musica_fundo || !dano_som) {
         fprintf(stderr, "Falha ao carregar samples.\n");
         al_destroy_display(display);
         return -1;
